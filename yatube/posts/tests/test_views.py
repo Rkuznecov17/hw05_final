@@ -5,7 +5,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post
+from posts.models import Group, Post, Follow
 
 User = get_user_model()
 
@@ -28,6 +28,7 @@ class PostViewsTests(TestCase):
             content_type='image/gif'
         )
         cls.user = User.objects.create_user(username='hasnoname')
+        cls.new_user = User.objects.create_user(username='idol')
         cls.group = Group.objects.create(
             title='Название группы для теста',
             slug='test-slug',
@@ -186,3 +187,53 @@ class PostViewsTests(TestCase):
         cache.clear()
         response_cache_clear = response().content
         self.assertNotEqual(response_secondary, response_cache_clear)
+
+    def test_authorized_client_can_follow(self):
+        """
+        Авторизованный пользователь может подписываться
+        на других пользователей.
+        """
+        self.authorized_client.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.new_user.username}))
+        subscribe = Follow.objects.get(user=self.user)
+        self.assertEqual(self.new_user, subscribe.author)
+
+    def test_authorized_client_can_unfollow(self):
+        """
+        Авторизованный пользователь может удалять
+        из подписок других пользователей.
+        """
+        self.authorized_client.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.new_user.username}))
+        Follow.objects.get(user=self.user)
+        one_follower = Follow.objects.count()
+        self.authorized_client.get(reverse(
+            'posts:profile_unfollow',
+            kwargs={'username': self.new_user.username}))
+        no_followers = Follow.objects.count()
+        self.assertEqual(one_follower - 1, no_followers)
+
+    def test_followers_get_post(self):
+        """
+        Новая запись пользователя появляется в ленте тех,
+        кто на него подписан и не появляется в ленте тех, кто не подписан.
+        """
+        self.authorized_client.get(reverse(
+            'posts:profile_follow',
+            kwargs={'username': self.new_user.username}))
+        idols_post = Post.objects.create(
+            text='Тестовый пост кумира',
+            group=self.group,
+            author=self.new_user,
+        )
+        user_next = User.objects.create_user(username='dont_like_idol')
+        authorized_user_next = Client()
+        authorized_user_next.force_login(user_next)
+        user_response = self.authorized_client.get(reverse(
+            'posts:follow_index'))
+        user_next_response = authorized_user_next.get(reverse(
+            'posts:follow_index'))
+        self.assertEqual(user_response.context['page_obj'][0], idols_post)
+        self.assertNotIn(idols_post, user_next_response.context['page_obj'])
