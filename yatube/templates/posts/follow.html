@@ -1,0 +1,27 @@
+{% extends 'base.html' %} 
+{% block title %}
+  {{ title }}
+{% endblock %}
+{% block content %}
+{% load cache %}
+{% cache 20 page_index %}
+<div class="container py-5">
+  <h3>Посты избранных авторов </h3> 
+  {% include 'posts/includes/switcher.html' %}
+  {% for post in page_obj %}
+    <article>
+      {% include 'includes/post_card.html' %}
+      {% if post.group %}   
+        <a href="{% url 'posts:group_list' post.group.slug %}">
+          все записи группы
+        </a>
+      {% else %}
+        <a href="{% url 'posts:index' %}">группы нет {{ posts.group.title }}</a>
+      {% endif %}
+      {% if not forloop.last %}<hr>{% endif %}
+    </article>
+  {% endfor %}
+  {% include 'posts/includes/paginator.html' %}  
+</div>
+{% endcache %}
+{% endblock %} 
