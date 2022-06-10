@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django import forms
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
@@ -5,7 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from posts.models import Group, Post, Follow
+from posts.models import Follow, Group, Post
 
 User = get_user_model()
 
@@ -29,6 +31,7 @@ class PostViewsTests(TestCase):
         )
         cls.user = User.objects.create_user(username='hasnoname')
         cls.new_user = User.objects.create_user(username='idol')
+        cls.user_follower = User.objects.create_user(username='UserFollower')
         cls.group = Group.objects.create(
             title='Название группы для теста',
             slug='test-slug',
@@ -53,6 +56,8 @@ class PostViewsTests(TestCase):
         self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
+        self.second_authorized_client = Client()
+        self.second_authorized_client.force_login(self.new_user)
 
     def common_test(self, post, text, group, author, imag):
         if text:
@@ -195,9 +200,9 @@ class PostViewsTests(TestCase):
         """
         self.authorized_client.get(reverse(
             'posts:profile_follow',
-            kwargs={'username': self.new_user.username}))
+            kwargs={'username': self.user.username}))
         subscribe = Follow.objects.get(user=self.user)
-        self.assertEqual(self.new_user, subscribe.author)
+        self.assertNotEqual(self.user.username, subscribe.author)
 
     def test_authorized_client_can_unfollow(self):
         """
@@ -214,6 +219,21 @@ class PostViewsTests(TestCase):
             kwargs={'username': self.new_user.username}))
         no_followers = Follow.objects.count()
         self.assertEqual(one_follower - 1, no_followers)
+
+    def test_follow_himself(self):
+        """Тест подписки юзера на самого себя."""
+        follower_count = self.user_follower.follower.count()
+        response = self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.user_follower}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertFalse(
+            self.user_follower.following.filter(
+                user=self.user_follower
+            ).exists()
+        )
+        self.assertEqual(self.user_follower.follower.count(),
+                         follower_count)
 
     def test_followers_get_post(self):
         """
