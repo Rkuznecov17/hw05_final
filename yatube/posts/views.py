@@ -13,6 +13,7 @@ def paginate_queryset(queryset, request):
     page_number = request.GET.get('page')
     return paginator.get_page(page_number)
 
+
 @cache_page(20)
 def index(request):
     posts = Post.objects.select_related('group', 'author')
@@ -121,7 +122,6 @@ def add_comment(request, post_id):
 
 @login_required
 def follow_index(request):
-    # информация о текущем пользователе доступна в переменной request.user
     posts = Post.objects.filter(author__following__user=request.user)
     context = {
         'title': 'Все посты ваших подписок',
@@ -132,15 +132,13 @@ def follow_index(request):
 
 @login_required
 def profile_follow(request, username):
-    # Подписаться на автора
     author = get_object_or_404(User, username=username)
-    Follow.objects.create(user=request.user,author=author)
+    Follow.objects.create(user=request.user, author=author)
     return redirect('posts:profile', username)
 
 
 @login_required
 def profile_unfollow(request, username):
-    # Дизлайк, отписка
     author = get_object_or_404(User, username=username)
     Follow.objects.get(user=request.user, author=author).delete()
     return redirect('posts:profile', username)

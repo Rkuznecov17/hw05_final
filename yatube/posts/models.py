@@ -17,6 +17,7 @@ class Group(models.Model):
     def __str__(self):
         return self.title
 
+
 class Post(CreatedModel):
     group = models.ForeignKey(
         Group,
@@ -55,6 +56,7 @@ class Post(CreatedModel):
     class Meta:
         ordering = ('-pub_date',)
 
+
 class Comment(CreatedModel):
     post = models.ForeignKey(
         Post,
@@ -74,6 +76,7 @@ class Comment(CreatedModel):
         'Текст комментария',
         help_text='Введите текст комментария'
     )
+
 
 class Follow(models.Model):
     user = models.ForeignKey(
