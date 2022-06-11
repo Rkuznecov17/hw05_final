@@ -32,6 +32,8 @@ class PostViewsTests(TestCase):
         cls.user = User.objects.create_user(username='hasnoname')
         cls.new_user = User.objects.create_user(username='idol')
         cls.user_follower = User.objects.create_user(username='UserFollower')
+        cls.user_author = User.objects.create_user(username='UserAuthor')
+
         cls.group = Group.objects.create(
             title='Название группы для теста',
             slug='test-slug',
@@ -193,16 +195,22 @@ class PostViewsTests(TestCase):
         response_cache_clear = response().content
         self.assertNotEqual(response_secondary, response_cache_clear)
 
-    def test_authorized_client_can_follow(self):
+    def test_authorized_client_follow(self):
         """
         Авторизованный пользователь может подписываться
         на других пользователей.
         """
-        self.authorized_client.get(reverse(
-            'posts:profile_follow',
-            kwargs={'username': self.user.username}))
-        subscribe = Follow.objects.get(user=self.user)
-        self.assertNotEqual(self.user.username, subscribe.author)
+        follower_count = self.user.follower.count()
+        response = self.authorized_client.get(
+            reverse('posts:profile_follow',
+                    kwargs={'username': self.user_author}))
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
+        self.assertTrue(
+            self.user_author.following.filter(
+                user=self.user
+            ).exists())
+        self.assertEqual(self.user.follower.count(),
+                         follower_count + 1)
 
     def test_authorized_client_can_unfollow(self):
         """
