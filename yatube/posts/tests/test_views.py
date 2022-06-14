@@ -61,29 +61,17 @@ class PostViewsTests(TestCase):
         self.second_authorized_client = Client()
         self.second_authorized_client.force_login(self.new_user)
 
-    def common_test(self, post, text, group, author, imag):
-        if text:
-            self.assertEqual(post.text, self.post.text)
-        if group:
-            self.assertEqual(post.group.title, self.group.title)
-        if author:
-            self.assertEqual(post.author, self.post.author)
-        if imag:
-            self.assertEqual(post.image, self.post.image)
+    def common_test(self, post):
+        self.assertEqual(post.text, self.post.text)
+        self.assertEqual(post.group.title, self.group.title)
+        self.assertEqual(post.author, self.post.author)
 
     def test_index_page_show_correct_context(self):
         """Шаблон index сформирован с правильным контекстом."""
         cache.clear()
         response = self.guest_client.get(reverse('posts:index'))
         post = response.context['page_obj'][0]
-        PostViewsTests.common_test(
-            self,
-            post,
-            text=True,
-            group=True,
-            author=True,
-            imag=True
-        )
+        self.common_test(post)
 
     def test_group_list_page_show_correct_context(self):
         """Шаблон group_list сформирован с правильным контекстом."""
@@ -91,14 +79,7 @@ class PostViewsTests(TestCase):
             reverse('posts:group_list', kwargs={'slug': self.group.slug})
         )
         post = response.context['page_obj'][0]
-        PostViewsTests.common_test(
-            self,
-            post,
-            text=True,
-            group=True,
-            author=False,
-            imag=True
-        )
+        self.common_test(post)
 
     def test_profile_page_show_correct_context(self):
         """Шаблон profile сформирован с правильным контекстом."""
@@ -106,14 +87,7 @@ class PostViewsTests(TestCase):
             reverse('posts:profile', kwargs={'username': self.user})
         )
         post = response.context['page_obj'][0]
-        PostViewsTests.common_test(
-            self,
-            post,
-            text=True,
-            group=False,
-            author=True,
-            imag=True
-        )
+        self.common_test(post)
 
     def test_post_detail_page_show_correct_context(self):
         """Шаблон post_detail сформирован с правильным контекстом."""
@@ -148,26 +122,6 @@ class PostViewsTests(TestCase):
             with self.subTest(value=value):
                 form_field = response.context.get('form').fields.get(value)
                 self.assertIsInstance(form_field, expected)
-
-    def test_post_appears_on_pages(self):
-        """
-        Созданный пост появляется на страницах:
-        index, group_list, profile.
-        """
-        cache.clear()
-        urls = (
-            reverse('posts:index'),
-            reverse('posts:profile', kwargs={'username': self.user}),
-            reverse('posts:group_list',
-                    kwargs={'slug': self.group.slug}),
-        )
-        for url in urls:
-            with self.subTest(url=url):
-                response = self.guest_client.get(url)
-                post = response.context['page_obj'][0]
-                self.assertEqual(post.author, self.post.author)
-                self.assertEqual(post.text, self.post.text)
-                self.assertEqual(post.group.title, self.post.group.title)
 
     def test_no_post_in_another_group_page(self):
         """Проверка, что пост не появляется на странице другой группы."""

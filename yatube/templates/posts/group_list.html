@@ -3,9 +3,9 @@
   Записи сообщества: {{ group.title }}
 {% endblock %}
 {% block content %}
-<h1>{{ group.title }}</h1>
-<p>{{ group.description }}</p>
-  {% for post in posts %}
-    {% include 'includes/post_card.html' %}
-  {% endfor %}
+  <h3>{{ group.title }}</h3>
+  <p>{{ group.description }}</p>
+    {% for post in posts %}
+      {% include 'includes/post_card.html' %}
+    {% endfor %}
 {% endblock %}

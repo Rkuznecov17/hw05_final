@@ -10,7 +10,7 @@ from ..models import Group, Post
 User = get_user_model()
 
 
-class TaskURLTests(TestCase):
+class PostsURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -38,8 +38,8 @@ class TaskURLTests(TestCase):
                 ['posts/create_post.html', HTTPStatus.FOUND],
         }
 
-    def test_unexisting_page_url_exists_at_desired_location(self):
-        """Страница не существует."""
+    def test_url_no_exists(self):
+        """Несуществующая страница должна вернуть код 404."""
         response = self.guest_client.get('/unexisting_page/')
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.assertTemplateUsed(response, 'core/404.html')

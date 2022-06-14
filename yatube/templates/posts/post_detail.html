@@ -16,7 +16,7 @@
       </li>
     </ul>
     {% thumbnail post.image "960x339" crop="center" upscale=True as im %}
-      <img class="card-img my-2" src="{{ im.url }}">
+        <img class="card-img my-2" src="{{ im.url }}">
     {% endthumbnail %}
     <p>{{ post.text }}</p>
     <a href="{% url 'posts:post_detail' post.pk %}">подробная информация</a>
@@ -28,7 +28,7 @@
     <li class="list-group-item">
       Группа:
       {% if post.group %}
-        {{ post.group }}</p>
+        <p>{{ post.group }}</p>
       {% endif %}
       {% if not group and post.group %}
         <a href="{% url 'posts:group_list' post.group.slug %}">все записи группы</a>
@@ -45,38 +45,32 @@
     </li>
     <p>{{ post.text }}</p>
     {% if post.author == request.user %}
-      <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">
-        редактировать запись
-      </a> 
+      <a class="btn btn-primary" href="{% url 'posts:post_edit' post.pk %}">редактировать запись</a> 
     {% endif %}
     {% if user.is_authenticated %}
-  <div class="card my-4">
-    <h5 class="card-header">Добавить комментарий:</h5>
-    <div class="card-body">
-      <form method="post" action="{% url 'posts:add_comment' post.id %}">
-        {% csrf_token %}      
-        <div class="form-group mb-2">
-          {{ form.text|addclass:"form-control" }}
-        </div>
-        <button type="submit" class="btn btn-primary">Отправить</button>
-      </form>
-    </div>
-  </div>
-{% endif %}
-{% for comment in comments %}
-  <div class="media mb-4">
-    <div class="media-body">
-      <h5 class="mt-0">
-        <a href="{% url 'posts:profile' comment.author.username %}">
-          {{ comment.author.username }}
-        </a>
-      </h5>
-        <p>
-         {{ comment.text }}
-        </p>
+    <div class="card my-4">
+      <h5 class="card-header">Добавить комментарий:</h5>
+      <div class="card-body">
+        <form method="post" action="{% url 'posts:add_comment' post.id %}">
+          {% csrf_token %}      
+          <div class="form-group mb-2">
+            {{ form.text|addclass:"form-control" }}
+          </div>
+          <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
       </div>
     </div>
-{% endfor %} 
+    {% endif %}
+    {% for comment in comments %}
+      <div class="media mb-4">
+        <div class="media-body">
+          <h5 class="mt-0">
+            <a href="{% url 'posts:profile' comment.author.username %}">{{ comment.author.username }}</a>
+          </h5>
+            <p>{{ comment.text }}</p>
+        </div>
+      </div>
+    {% endfor %} 
     {% if not forloop.last %}
       <hr>
     {% endif %}
